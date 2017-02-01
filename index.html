@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <select id="unitSelect"></select>
+    <div>
+      <span>Cards in deck: </span><span id="cardsInDeck"></span>
+      <span style="margin-left:100px;">Cards in discard: </span><span id="cardsInDiscard"></span>
+    <div>
+    <button type="button" id="drawCard" disabled>draw card</button>
+    <div id="cardContainer" style="width:100%;"></div>
+  </head>
+  <body>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+    <script type="text/javascript">
+
+      var inheritsFrom = function (child, parent) {
+        child.prototype = Object.create(parent.prototype);
+      };
+
+      function Card(name) {
+        this.name = name;
+      }
+
+      function Weapon(name, dam, acc) {
+        Card.call(this, name);
+        this.damage = dam;
+        this.accuracy = acc;
+
+        this.getView = function(index) {
+          var someHorseShit =
+            "<div class='card' data-index='" + index + "' style='border:2px solid black;width: 126px; height: 176px;margin:10px;float:left;'>" +
+              "<p style='font-size: 150%; margin-top:40px;'>" + this.name + "</p>" +
+              "<p> Dam: " + this.damage + "</p>" +
+              "<p> Acc: " + this.accuracy + "</p>" +
+            "</div>";
+          return someHorseShit;
+        };
+      }
+      inheritsFrom(Weapon, Card);
+
+      var SpellType = {
+        elemental : "elemental",
+        material : "material",
+        life : "life",
+        quantized : "quantized"
+      }
+
+      function Spell(name, type, cost, text) {
+        Card.call(this, name);
+        this.type = type;
+        this.cost = cost;
+        this.text = text;
+
+        this.getView = function(index) {
+          var someHorseShit =
+            "<div class='card' data-index='" + index + "' style='border:2px solid black;width: 126px; height: 176px;margin:10px;float:left;'>" +
+              "<div>" + this.type + " - " +  this.cost + "</div>" +
+              "<p style='font-size: 150%; margin-top:30px;'>" + this.name + "</p>" +
+              "<p>" + this.text + "</p>" +
+            "</div>";
+          return someHorseShit;
+        };
+      }
+      inheritsFrom(Spell, Card);
+
+      function Ability(name, text) {
+        Card.call(this, name);
+        this.text = text;
+
+        this.getView = function(index) {
+          var someHorseShit =
+            "<div class='card' data-index='" + index + "' style='border:2px solid black;width: 126px; height: 176px;margin:10px;float:left;'>" +
+              "<p style='font-size: 150%; margin-top:40px;'>" + this.name + "</p>" +
+              "<p>" + this.text + "</p>" +
+            "</div>";
+          return someHorseShit;
+        };
+      }
+      inheritsFrom(Ability, Card);
+
+      function Unit(name) {
+        this.name = name;
+        this.deck = [];
+        this.discard = [];
+
+        this.addToDeck = function(card, numberOf = 1) {
+          for (var i = 0; i < numberOf; i++) {
+            this.deck.push(card);
+          }
+          return this;
+        };
+
+        this.drawFromDeck = function() {
+          if (this.deck.length === 0) {
+            for (var i = 0; i < this.discard.length; i++) {
+              this.addToDeck(this.discard[i]);
+            }
+            this.discard = [];
+
+            if (this.deck.length === 0) {
+              return null;
+            }
+          }
+
+          var randomIndex = Math.floor(Math.random() * this.deck.length);
+          var tempCard = this.deck[randomIndex];
+          this.deck.splice(randomIndex, 1);
+          return tempCard;
+        };
+
+        return this;
+      }
+
+      var units = {};
+      var selectedUnit = null;
+      var currentCards = {};
+      var count = 0;
+
+      $(document).ready(function() {
+        // define unit types
+        var unit = new Unit("Japanese Infantry")
+          .addToDeck(new Weapon("Assault Rifle", 4, 3), 6)
+          .addToDeck(new Spell("Combustion Mod", SpellType.elemental, 1, "Use this with a weapon. +1 damage to shot. 30% to combust the tile beneath the target, and adjacent tiles."), 2)
+          .addToDeck(new Weapon("Pistol", 2, 2), 4);
+        units[unit.name] = unit;
+
+        unit = new Unit("Japanese Commando")
+          .addToDeck(new Weapon("Assault Rifle", 4, 3), 4)
+          .addToDeck(new Spell("Combustion Mod", SpellType.elemental, 1, "Use this with a weapon. +1 damage to shot. 30% to combust the tile beneath the target, and adjacent tiles."), 2)
+          .addToDeck(new Spell("Barrier", SpellType.material, 3, "Create a barrier at target location."), 2)
+          .addToDeck(new Spell("Combust", SpellType.elemental, 4, "Combust a 3x3 set of tiles."), 2)
+          .addToDeck(new Weapon("Pistol", 2, 2), 2);
+        units[unit.name] = unit;
+
+        // insert into dropdown
+        var options = "<option value='eh'>Select Unit</option>";
+        for(var key in units) {
+          options = options + "<option value='" + key + "'>" + key + "</option>";
+        }
+        $("#unitSelect").html(options);
+
+        // on dropdown select, freeze select
+        $("#unitSelect").change(function() {
+          if ($(this).val() === "eh") return;
+
+          $("#unitSelect").prop("disabled", true);
+          $("#drawCard").prop("disabled", false);
+          selectedUnit = units[$(this).val()];
+          $(document).prop('title', $(this).val());
+          $("#cardsInDeck").html(selectedUnit.deck.length);
+          $("#cardsInDiscard").html(selectedUnit.discard.length);
+        });
+
+        // on draw card, add card to view
+        $("#drawCard").click(function() {
+          var card = selectedUnit.drawFromDeck();
+          if (card === null) return;
+          count++;
+          currentCards[count] = card;
+
+          $("#cardsInDeck").html(selectedUnit.deck.length);
+          $("#cardsInDiscard").html(selectedUnit.discard.length);
+          var cardContainerhtml = $("#cardContainer").html() == undefined ? "" : $("#cardContainer").html();
+          $("#cardContainer").html(cardContainerhtml + card.getView(count));
+
+          $(".card").click(function() {
+            var index = $(this).data("index");
+            var removedCard = currentCards[index];
+
+            delete currentCards[index]
+            $(this).remove();
+
+            selectedUnit.discard.push(removedCard);
+            $("#cardsInDiscard").html(selectedUnit.discard.length);
+          });
+        });
+
+      });
+
+    </script>
+  </body>
+</html>
