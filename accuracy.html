@@ -24,9 +24,9 @@
 
       this.calculate = function() {
         if (weaponAcc === 0) return -1;
-                
+
         var dist = Math.sqrt(Math.pow(this.xdist, 2) + Math.pow(this.ydist, 2));
-        var totalAcc = 140 - 20*(dist/this.weaponAcc);
+        var totalAcc = 125 - 25*(dist/this.weaponAcc);
         currentAccuracy = this.behindCover ? totalAcc - 20 : totalAcc;
         return currentAccuracy;
       };
