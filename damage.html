@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <form>
+      Chance: <input type="number" name="chance"> <br>
+      Weapon Damage: <input type="number" name="damage"> <br>
+      Evasion: <input type="number" name="evasion"> <br>
+      <input type="submit" value="Throw Dice"> <br>
+      <br>
+      Damage Dealt: <span id="result"></span>
+    </form>
+  </head>
+  <body>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+    <script type="text/javascript">
+
+    var currentAccuracy = null;
+
+    function FormData(chance, damage, evasion) {
+      this.chance = chance;
+      this.damage = damage;
+      this.evasion = evasion;
+
+      this.calculate = function() {
+        var roll = Math.floor(Math.random() * 100);
+        var hit = roll < chance;
+        if (!hit) return 0;
+
+        var dodge = Math.floor(Math.random() * 100) < this.evasion*5;
+
+        return dodge ? this.damage/2 : this.damage;
+      };
+    }
+
+    var Type = {
+      NUMBER: 0,
+      BOOL: 1
+    }
+
+    function findValue(serializedArray, name, type) {
+      for (var i = 0; i < serializedArray.length; i++) {
+        var thingy = serializedArray[i];
+        if (thingy.name === name && thingy.value !== "") {
+          if (type == Type.NUMBER) {
+            return parseInt(thingy.value);
+          }
+          if (type == Type.BOOL && thingy.value === "on") {
+            return true;
+          }
+        }
+      }
+
+      if (type == Type.NUMBER) return 0;
+      if (type == Type.BOOL) return false;
+    }
+
+    $("form").submit(function(event) {
+      console.log("blarg");
+      event.preventDefault();
+      var serialized = $(this).serializeArray();
+      var formData = new FormData(findValue(serialized, "chance", Type.NUMBER),
+                                  findValue(serialized, "damage", Type.NUMBER),
+                                  findValue(serialized, "evasion", Type.NUMBER));
+      console.log(formData);
+      $("#result").html(formData.calculate());
+    });
+
+    </script>
+  </body>
+</html>
