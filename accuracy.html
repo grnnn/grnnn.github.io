@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html>
+  <title>Accuracy</title>
   <head>
     <form>
       X Distance: <input type="number" name="xdist"> Y Distance: <input type="number" name="ydist"> <br>
@@ -26,9 +27,10 @@
         if (weaponAcc === 0) return -1;
 
         var dist = Math.sqrt(Math.pow(this.xdist, 2) + Math.pow(this.ydist, 2));
-        var totalAcc = 125 - 25*(dist/(this.weaponAcc+2));
+        var totalAcc = 115 - 5*(Math.pow(dist, 2)/(this.weaponAcc+3));
         currentAccuracy = this.behindCover ? totalAcc - 20 : totalAcc;
-        return currentAccuracy;
+
+        return Math.max(1, Math.min(currentAccuracy, 100));
       };
     }
 
